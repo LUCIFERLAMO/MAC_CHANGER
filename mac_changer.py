@@ -3,6 +3,23 @@
 import subprocess 
 import optparse
 
+def get_arguments():
+    parse = optparse.OptionParser()
+
+    parse.add_option("-i", "--Interface", dest="INTERFACE", help="Enter the Interface name to change it")
+    parse.add_option("-m", "--mac", dest="MAC_ADDRESS", help="Enter your custom mac address")
+
+    (options, arguments) = parse.parse_args()
+    
+    if not options.INTERFACE:
+        parse.error("[-] Kindly enter a interface name or use --help")
+    elif not options.MAC_ADDRESS:
+        parse.error("[-] kindly enter the mac address or use --help")
+    else:
+        return options.INTERFACE, options.MAC_ADDRESS
+
+
+
 def change_mac_address(interface, mac):
     print("-" * 60)
     print()
@@ -20,12 +37,7 @@ def change_mac_address(interface, mac):
     print("[+] Thank you")
     print("-" * 60)
 
-parse = optparse.OptionParser()
 
-parse.add_option("-i", "--Interface", dest="INTERFACE", help="Enter the Interface name to change it")
-parse.add_option("-m", "--mac", dest="MAC_ADDRESS", help="Enter your custom mac address")
-
-(options, arguments) = parse.parse_args()
-
-change_mac_address(options.INTERFACE, options.MAC_ADDRESS)
+interface,mac = get_arguments()
+change_mac_address(interface, mac)
     
