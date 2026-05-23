@@ -1,16 +1,20 @@
 #!/usr/bin/env python
 
 import subprocess 
+import optparse
 
+parse = optparse.OptionParser()
+
+parse.add_option("-i", "--Interface", dest="INTERFACE", help="Enter the Interface name to change it")
+parse.add_option("-m", "--mac", dest="MAC_ADDRESS", help="Enter your custom mac address")
+(options, arguments) = parse.parse_args()
+
+new_mac = options.MAC_ADDRESS
+interface = options.INTERFACE
 print("-" * 60)
 
-
-interface = input("Enter the interface (eth0): ")
-if interface != "eth0":
-    print("Invalid choose from the given option")
-    exit(0)
       
-new_mac = input("Enter a mac address (12 numbers/characters): ")
+
 print()
 print(f"[+] changing MAC address for {interface} to {new_mac}")
 
@@ -21,7 +25,7 @@ subprocess.call(["ifconfig", interface, "up"])
 print("[+] DONE!")
 print("[+] check the new MAC address")
 print()
-subprocess.call(["ifconfig"])
+subprocess.call(["ifconfig", interface])
 print()
 print("[+] Thank you")
 
