@@ -22,20 +22,30 @@ def get_arguments():
 
 def change_mac_address(interface, mac):
     print("-" * 60)
-    print()
+    current_mac = subprocess.check_output(
+       f"ifconfig {interface} | grep ether | awk '{{print $2}}'",
+       shell= True
+    )
+    c_m = current_mac.decode("utf-8").strip()
+    print(f"[+] Your current mac address: {c_m}")
     print(f"[+] changing MAC address for {interface} to {mac}")
-    
-    subprocess.call(["ifconfig", interface, "down"])
-    subprocess.call(["ifconfig", interface, "hw", "ether", mac])
-    subprocess.call(["ifconfig", interface, "up"])
-    
-    print("[+] DONE!")
-    print("[+] check the new MAC address")
-    print()
-    subprocess.call(["ifconfig", interface])
-    print()
-    print("[+] Thank you")
-    print("-" * 60)
+
+    try:
+     subprocess.check_call(["ifconfig", interface, "down"])
+     subprocess.check_call(["ifconfig", interface, "hw", "ether", mac])
+     subprocess.check_call(["ifconfig", interface, "up"])
+
+     print("[+] DONE!")
+     print("[+] check the new MAC address")
+     print()
+     subprocess.call(["ifconfig", interface])
+     print()
+     print("[+] Thank you")
+     print("-" * 60)
+
+    except subprocess.CalledProcessError as e:
+        print("Enter valid details")
+        return
 
 
 interface,mac = get_arguments()
