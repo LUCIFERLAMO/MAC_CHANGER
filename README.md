@@ -1,15 +1,17 @@
 # MAC Address Changer
 
-A Python CLI tool to change the MAC address of a network interface on Linux — built for educational purposes as part of learning ethical hacking and network security.
+A Python CLI tool to change, randomize, restore, and track MAC addresses on Linux network interfaces. Built as part of learning ethical hacking and network security.
 
 ---
 
 ## Features
 
-- Validates MAC address format before attempting change
-- Verifies the interface exists before running
-- Confirms whether the MAC address actually changed
-- Requires root — exits cleanly with a clear message if not
+- Change MAC address to a custom value
+- Generate a random MAC address with one flag
+- Restore the previous MAC address from backup
+- Stealth mode — auto-randomizes MAC every N minutes
+- Full history log with timestamps, interface, old and new MAC
+- Input validation — MAC format, interface existence, root check
 
 ---
 
@@ -29,7 +31,7 @@ sudo apt install net-tools
 ## Usage
 
 ```bash
-sudo python3 mac_changer.py -i <interface> -m <new_mac>
+sudo python3 mac_changer.py -i <interface> [option]
 ```
 
 ## Options
@@ -37,21 +39,34 @@ sudo python3 mac_changer.py -i <interface> -m <new_mac>
 | Option | Description |
 |---|---|
 | `-i` / `--Interface` | Network interface (e.g. `eth0`, `wlan0`) |
-| `-m` / `--mac` | New MAC address (format: `AA:BB:CC:DD:EE:FF`) |
-| `-h` / `--help` | Show help and exit |
+| `-m` / `--mac` | Set a custom MAC address |
+| `-r` / `--random` | Generate and apply a random MAC address |
+| `-e` / `--restore` | Restore the previously saved MAC address |
+| `-s` / `--Stealth` | Stealth mode — change MAC every N minutes |
+| `-H` / `--history` | View MAC change history with timestamps |
+| `--help` | Show help and exit |
 
 ---
 
 ## Examples
 
 ```bash
-# Change MAC on eth0
+# Set a custom MAC
 sudo python3 mac_changer.py -i eth0 -m 00:11:22:33:44:55
 
-# Change MAC on wlan0
-sudo python3 mac_changer.py -i wlan0 -m AA:BB:CC:DD:EE:FF
+# Generate a random MAC
+sudo python3 mac_changer.py -i eth0 -r
 
-# See all available interfaces
+# Restore previous MAC
+sudo python3 mac_changer.py -i eth0 -e
+
+# Stealth mode — change every 5 minutes
+sudo python3 mac_changer.py -i eth0 -s 5
+
+# View history
+sudo python3 mac_changer.py -H
+
+# See available interfaces
 ifconfig -a
 ```
 
@@ -60,11 +75,20 @@ ifconfig -a
 ## How It Works
 
 1. Checks for root privileges
-2. Validates the MAC address format (`AA:BB:CC:DD:EE:FF`)
-3. Confirms the interface exists
-4. Reads and displays the current MAC address
-5. Brings the interface down, applies the new MAC, brings it back up
-6. Verifies the change was successful
+2. Validates MAC format and interface existence
+3. Saves current MAC to `~/.mac_changer_backup` before changing
+4. Brings interface down, applies new MAC, brings it back up
+5. Verifies the change was successful
+6. Logs every change to `~/.Mac_Address_History` with timestamp
+
+---
+
+## File Storage
+
+| File | Purpose |
+|---|---|
+| `~/.mac_changer_backup` | Stores last MAC for restore |
+| `~/.Mac_Address_History` | Full log of all MAC changes |
 
 ---
 
