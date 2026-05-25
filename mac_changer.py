@@ -5,6 +5,10 @@ import optparse
 import re
 import os 
 import random
+import datetime
+
+history_file  = os.path.expanduser("~/.Mac_Address_History")
+file_path = os.path.expanduser("~/.mac_changer_backup")
 
 def get_arguments():
     if os.geteuid() != 0:
@@ -20,9 +24,15 @@ def get_arguments():
     parse.add_option("-i", "--Interface", dest="INTERFACE", help="Enter the Interface name to change it")
     parse.add_option("-m", "--mac", dest="MAC_ADDRESS", help="Enter your custom mac address")
     parse.add_option("-r", "--random", action="store_true", dest="RANDOM", default=False, help="Random Mac address will be generated")
-    parse.add_option("-t", "--restore", default=False, action="store_true", dest="RESTORE", help="Change to the previous mac address.")
+    parse.add_option("-e", "--restore", default=False, action="store_true", dest="RESTORE", help="Change to the previous mac address.")
+    parse.add_option("-H", "--history", dest="HISTORY", default=False, action="store_true", help="Show's the old mac, new mac and the interface name with timestamps")
 
     (options, arguments) = parse.parse_args()
+
+    if options.HISTORY:
+        show_history()
+        exit(0)
+
 
 # The parse.error ends the program by themself so exit(0) not required
     if not options.INTERFACE:
@@ -37,6 +47,7 @@ def get_arguments():
         print(f"[+] Old Mac Address restored {options.MAC_ADDRESS}")
     elif not options.MAC_ADDRESS:
         parse.error("Enter a MAC address or use --help or -r")
+    
         
 
     m = options.MAC_ADDRESS
@@ -67,12 +78,12 @@ def get_arguments():
     return options.INTERFACE,options.MAC_ADDRESS
     
     
+
 def New_mac_generator():
     new_mac = [0x02]+[random.randint(0x00, 0xff) for _ in range(5)]
     return  ":".join(f"{byte:02x}" for byte in new_mac)
 
 
-file_path = os.path.expanduser("~/.mac_changer_backup")
 
 # takes the mac address and saves it in the file path
 def save_mac(interface):
@@ -99,6 +110,36 @@ def Restore_MAC_address(interface):
     with open(file_path,"r") as f:
         return f.read().strip()
 
+def save_history(interface,old_mac,new_mac):
+    time_stamp = datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S")
+
+    if not os.path.exists(history_file):
+        with open(history_file,"w") as f:
+            f.write("TIMESTAMP            | INTERFACE | OLD MAC           | NEW MAC\n")
+            f.write("-" * 72 + "\n")
+
+
+    with open(history_file, "a") as f:
+        f.write(f"{time_stamp} | {interface}      | {old_mac} | {new_mac}\n")
+    print(f"[+] History saved")
+
+
+def show_history():
+    if not os.path.exists(history_file):
+        print(f"""[-] history file is empty.
+        change the mac address to see the history file """)
+        return
+    
+    print("*" *72)
+    print()
+    print(" \t\t\t  MAC ADDRESS HISTORY")
+    print()
+    print("*" *72)
+    with open(history_file,"r") as f:
+        print(f.read())
+    
+        
+    
 
 def change_mac_address(interface, mac):
     print("-" * 60)
@@ -125,6 +166,7 @@ def change_mac_address(interface, mac):
 
      new_mac = re.search(r"([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}", result)
 
+     
      if new_mac.group(0).lower() == old_mac.group(0).lower():
          print("[-] MAC address did not change")
          return
@@ -135,11 +177,14 @@ def change_mac_address(interface, mac):
         subprocess.call(["ifconfig", interface])
         print()
         print("[+] Thank you")
+        save_history(interface, old_mac.group(0), new_mac.group(0)) # saving in the history file
         print("-" * 60)
 
     except subprocess.CalledProcessError as e:
         print("Enter valid details")
         return
+    
+    
 
 
 interface,mac = get_arguments()
