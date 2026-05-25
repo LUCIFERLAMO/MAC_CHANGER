@@ -6,6 +6,7 @@ import re
 import os 
 import random
 import datetime
+import time
 
 history_file  = os.path.expanduser("~/.Mac_Address_History")
 file_path = os.path.expanduser("~/.mac_changer_backup")
@@ -26,6 +27,7 @@ def get_arguments():
     parse.add_option("-r", "--random", action="store_true", dest="RANDOM", default=False, help="Random Mac address will be generated")
     parse.add_option("-e", "--restore", default=False, action="store_true", dest="RESTORE", help="Change to the previous mac address.")
     parse.add_option("-H", "--history", dest="HISTORY", default=False, action="store_true", help="Show's the old mac, new mac and the interface name with timestamps")
+    parse.add_option("-s","--Stealth", default= False, type=int,dest= "STEALTH" ,help="change the MAC address for every N interval of time")
 
     (options, arguments) = parse.parse_args()
 
@@ -45,6 +47,8 @@ def get_arguments():
     elif options.RESTORE:
         options.MAC_ADDRESS = Restore_MAC_address(options.INTERFACE) 
         print(f"[+] Old Mac Address restored {options.MAC_ADDRESS}")
+    elif options.STEALTH:
+        return options.INTERFACE, None , options.STEALTH # if stealth mode then we dont need the mac address from the user
     elif not options.MAC_ADDRESS:
         parse.error("Enter a MAC address or use --help or -r")
     
@@ -75,7 +79,7 @@ def get_arguments():
         print()
         exit(1)    
     
-    return options.INTERFACE,options.MAC_ADDRESS
+    return options.INTERFACE,options.MAC_ADDRESS, None
     
     
 
@@ -86,7 +90,7 @@ def New_mac_generator():
 
 
 # takes the mac address and saves it in the file path
-def save_mac(interface):
+def save_mac_history(interface):
     output = subprocess.check_output(["ifconfig",interface]).decode("utf-8")
     mac = re.search(r"([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}", output)
 
@@ -184,10 +188,43 @@ def change_mac_address(interface, mac):
         print("Enter valid details")
         return
     
+
+def Stealth_mode(interface,interval):
+    print("*" * 60)
+    print()
+    print("\t\t STEALTH MODE")
+    print()
+    print("*" * 60)
     
 
+    output = subprocess.check_output(["ifconfig",interface]).decode("utf-8")
+    mac = re.search(r"([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}", output)
 
-interface,mac = get_arguments()
-save_mac(interface)
-change_mac_address(interface, mac)
+    print(f"[+] Your original ip address {mac.group(0)}")
+ 
+    try:
+
+      while True:
+        print()
+        new_mac = New_mac_generator()
+        print(f"[+] changing the mac address.....")
+        change_mac_address(interface,new_mac)
+        print(f"[+] Your new Mac address is {new_mac}")
+        print(f"[+] The next change is in {interval} minutes.... ")
+        time.sleep(interval * 60) # because sleep takes time in seconds and we r converting it into minutes.
+        print()
+        print()
+
+    except KeyboardInterrupt as e:
+          print("[+] Thank You")
+    
+
+interface,mac,stealth_interval = get_arguments()
+
+if stealth_interval:
+    save_mac_history(interface)
+    Stealth_mode(interface,stealth_interval)   
+else:     
+    save_mac_history()
+    change_mac_address(interface, mac)
 
