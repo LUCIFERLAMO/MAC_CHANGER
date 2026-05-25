@@ -4,6 +4,7 @@ import subprocess
 import optparse
 import re
 import os 
+import random
 
 def get_arguments():
     if os.geteuid() != 0:
@@ -18,14 +19,21 @@ def get_arguments():
 
     parse.add_option("-i", "--Interface", dest="INTERFACE", help="Enter the Interface name to change it")
     parse.add_option("-m", "--mac", dest="MAC_ADDRESS", help="Enter your custom mac address")
+    parse.add_option("-r", "--random", action="store_true", dest="RANDOM", default=False, help="Random Mac address will be generated")
 
     (options, arguments) = parse.parse_args()
 
 # The parse.error ends the program by themself so exit(0) not required
     if not options.INTERFACE:
         parse.error("[-] Kindly enter a interface name or use --help")
+    elif options.RANDOM:
+        options.MAC_ADDRESS = New_mac_generator()
+        print()
+        print(f"[+] Your new MAC ADDRESS {options.MAC_ADDRESS}")
+        print()
     elif not options.MAC_ADDRESS:
-        parse.error("[-] kindly enter the mac address or use --help")
+        parse.error("Enter a MAC address or use --help or -r")
+        
     
 
     m = options.MAC_ADDRESS
@@ -51,12 +59,14 @@ def get_arguments():
         print("Try doing ifconfig -a to see the other options")
         print("-" * 60)
         print()
-        exit(1)
+        exit(1)    
     
     return options.INTERFACE,options.MAC_ADDRESS
     
     
-    
+def New_mac_generator():
+    new_mac = [0x02]+[random.randint(0x00, 0xff) for _ in range(5)]
+    return  ":".join(f"{byte:02x}" for byte in new_mac)
 
 
 
