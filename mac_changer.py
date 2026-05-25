@@ -20,6 +20,7 @@ def get_arguments():
     parse.add_option("-i", "--Interface", dest="INTERFACE", help="Enter the Interface name to change it")
     parse.add_option("-m", "--mac", dest="MAC_ADDRESS", help="Enter your custom mac address")
     parse.add_option("-r", "--random", action="store_true", dest="RANDOM", default=False, help="Random Mac address will be generated")
+    parse.add_option("-t", "--restore", default=False, action="store_true", dest="RESTORE", help="Change to the previous mac address.")
 
     (options, arguments) = parse.parse_args()
 
@@ -31,14 +32,16 @@ def get_arguments():
         print()
         print(f"[+] Your new MAC ADDRESS {options.MAC_ADDRESS}")
         print()
+    elif options.RESTORE:
+        options.MAC_ADDRESS = Restore_MAC_address(options.INTERFACE) 
+        print(f"[+] Old Mac Address restored {options.MAC_ADDRESS}")
     elif not options.MAC_ADDRESS:
         parse.error("Enter a MAC address or use --help or -r")
         
-    
 
     m = options.MAC_ADDRESS
 
-    if not re.match(r"^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$", m):
+    if not re.match(r"^([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}$", m): #validating if its a valid mac address 
         print("-" * 60)
         print()
         print("[-] Invalid MAC address")
@@ -47,7 +50,7 @@ def get_arguments():
         exit(1)
     
     try: 
-        subprocess.check_call(
+        subprocess.check_call(                   # validating if its a valid interface 
             ["ifconfig", options.INTERFACE],
             stdout = subprocess.DEVNULL,
             stderr = subprocess.DEVNULL
@@ -68,6 +71,33 @@ def New_mac_generator():
     new_mac = [0x02]+[random.randint(0x00, 0xff) for _ in range(5)]
     return  ":".join(f"{byte:02x}" for byte in new_mac)
 
+
+file_path = os.path.expanduser("~/.mac_changer_backup")
+
+# takes the mac address and saves it in the file path
+def save_mac(interface):
+    output = subprocess.check_output(["ifconfig",interface]).decode("utf-8")
+    mac = re.search(r"([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}", output)
+
+    if os.path.exists(file_path): 
+      with open(file_path,"r") as f:   
+        saved_mac = f.read().strip()
+      if saved_mac.lower() == mac.group(0).lower(): #checking if the mac address saved in the file is same as the incomming mac address 
+        print(f"[-] MAC already saved, skipping backup")
+        return
+    
+    with open(file_path,"w") as f:
+          f.write(mac.group(0))
+    print(f"[+] MAC address saved")
+
+
+# checks if the file path exists if yes it will return the mac address
+def Restore_MAC_address(interface):
+    if not os.path.exists(file_path):
+        print(f"[-] Restore cant be performed, did u run the program once?")
+        exit(1)
+    with open(file_path,"r") as f:
+        return f.read().strip()
 
 
 def change_mac_address(interface, mac):
@@ -113,5 +143,6 @@ def change_mac_address(interface, mac):
 
 
 interface,mac = get_arguments()
+save_mac(interface)
 change_mac_address(interface, mac)
-    
+
