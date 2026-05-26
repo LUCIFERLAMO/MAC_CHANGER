@@ -107,6 +107,7 @@ def save_mac_history(interface):
     
     data = {}
     if os.path.exists(file_path): 
+      # if the file does not exist then it will go to the next if block and there the file will be created.
       with open(file_path,"r") as f:  
         try:   # this is for a backup as json cant append new lines and if we do then the old data is lost 
              data = json.load(f)
@@ -166,8 +167,6 @@ def show_history():
     print("*" *72)
     with open(history_file,"r") as f:
         print(f.read())
-    
-        
     
 
 def change_mac_address(interface, mac):
