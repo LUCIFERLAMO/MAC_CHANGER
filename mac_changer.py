@@ -47,7 +47,6 @@ def get_arguments():
         print()
     elif options.RESTORE:
         options.MAC_ADDRESS = Restore_MAC_address(options.INTERFACE) 
-        print(f"[+] Old Mac Address restored {options.MAC_ADDRESS}")
     elif options.STEALTH:
         return options.INTERFACE, None , options.STEALTH # if stealth mode then we dont need the mac address from the user
     elif not options.MAC_ADDRESS:
@@ -224,7 +223,7 @@ def Stealth_mode(interface,interval):
     output = subprocess.check_output(["ifconfig",interface]).decode("utf-8")
     mac = re.search(r"([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}", output)
 
-    print(f"[+] Your original ip address {mac.group(0)}")
+    print(f"[+] Your original MAC address {mac.group(0)}")
  
     try:
 
