@@ -7,6 +7,7 @@ import os
 import random
 import datetime
 import time
+import json
 
 history_file  = os.path.expanduser("~/.Mac_Address_History")
 file_path = os.path.expanduser("~/.mac_changer_backup")
@@ -101,27 +102,42 @@ def New_mac_generator():
 # takes the mac address and saves it in the file path
 def save_mac_history(interface):
     output = subprocess.check_output(["ifconfig",interface]).decode("utf-8")
-    mac = re.search(r"([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}", output)
-
-    if os.path.exists(file_path): 
-      with open(file_path,"r") as f:   
-        saved_mac = f.read().strip()
-      if saved_mac.lower() == mac.group(0).lower(): #checking if the mac address saved in the file is same as the incomming mac address 
-        print(f"[-] MAC already saved, skipping backup")
-        return
+    result = re.search(r"([a-fA-F0-9]{2}:){5}[a-fA-F0-9]{2}", output)
+    mac = result.group(0)
     
-    with open(file_path,"w") as f:
-          f.write(mac.group(0))
-    print(f"[+] MAC address saved")
+    data = {}
+    if os.path.exists(file_path): 
+      with open(file_path,"r") as f:  
+        try:   # this is for a backup as json cant append new lines and if we do then the old data is lost 
+             data = json.load(f)
+        except json.JSONDecodeError:
+            pass
+
+# done only when a new interface is typed
+    if interface not in data:
+        data[interface] = mac
+        with open(file_path, "w") as f:
+            json.dump(data,f)
+        print(f"[+] Original Mac address saved")
+    
 
 
 # checks if the file path exists if yes it will return the mac address
 def Restore_MAC_address(interface):
+    # done so that if the user types -e in the very start then it will stop the user
     if not os.path.exists(file_path):
         print(f"[-] Restore cant be performed, did u run the program once?")
         exit(1)
+
     with open(file_path,"r") as f:
-        return f.read().strip()
+        data = json.load(f)
+    
+    if interface in data:
+        print(f"[+] Original mac address for the interface {interface} restored")
+        return data[interface]
+    else:
+        print(f"[-] No Backup found for this interfcae")
+        exit(1)
 
 def save_history(interface,old_mac,new_mac):
     time_stamp = datetime.datetime.now().strftime("%Y-%m-%d  %H:%M:%S")
