@@ -64,7 +64,16 @@ def get_arguments():
         print()
         exit(1)
     
-    try: 
+    inf = options.INTERFACE
+
+    if inf.lower() == "lo": # if the interface is Local Host then reject it.
+            print()
+            print("-" *50)
+            print("[-] Sorry but this interface cant be accepted")
+            print()
+            print("-" *50)
+            exit(1)
+    try:
         subprocess.check_call(                   # validating if its a valid interface 
             ["ifconfig", options.INTERFACE],
             stdout = subprocess.DEVNULL,
@@ -225,6 +234,6 @@ if stealth_interval:
     save_mac_history(interface)
     Stealth_mode(interface,stealth_interval)   
 else:     
-    save_mac_history()
+    save_mac_history(interface)
     change_mac_address(interface, mac)
 
